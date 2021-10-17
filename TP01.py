@@ -34,13 +34,24 @@ def main() -> None:
 
         jugador_1:dict = {nombre_jugador_1 : 0} #Nombre : posicion actual del tablero
         jugador_2:dict = {nombre_jugador_2 : 0} #Nombre : posicion actual del tablero
+        
 
         CANTIDAD_FILAS_TABLERO:int = 10
         CANTIDAD_COLUMNAS_TABLERO:int = 10
-        ultima_pos_fila:int = 1 
+        ultima_pos_fila:int = 101
 
         for fila in range(1, CANTIDAD_FILAS_TABLERO + 1):
-            for posicion in range(ultima_pos_fila, ultima_pos_fila + CANTIDAD_FILAS_TABLERO):
+            posicion_desde:int = ultima_pos_fila - 1
+            posicion_hasta:int = ultima_pos_fila - CANTIDAD_COLUMNAS_TABLERO - 1
+            step:int = -1
+
+            if (fila % 2 == 0):
+                #Si la fila es par, voy en orden descendente
+                posicion_desde = ultima_pos_fila - CANTIDAD_COLUMNAS_TABLERO
+                posicion_hasta = ultima_pos_fila 
+                step = 1
+
+            for posicion in range(posicion_desde, posicion_hasta, step):
                 if (posicion in POS_ESCALERAS_SERPIENTES.keys()):
                     if ( posicion < POS_ESCALERAS_SERPIENTES.get(posicion, 0)):
                         #Es una escalera 
@@ -50,9 +61,13 @@ def main() -> None:
                         print(f"| {posicion} (S) ", end=' ')                    
                 else:    
                     print(f"| {posicion} ", end=' ')
-                    
+
             print("|")
-            ultima_pos_fila = posicion + 1
+            if (fila % 2 == 0):
+                ultima_pos_fila = posicion_desde
+            else:
+                ultima_pos_fila = posicion
+
             print("")
 
     elif (opcion == OP_MOSTRAR_ESTADISTICAS):
