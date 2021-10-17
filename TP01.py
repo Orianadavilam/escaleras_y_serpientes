@@ -16,25 +16,42 @@ def main() -> None:
     print("Ingrese (2) para - MOSTRAR ESTADÍSTICAS DE CASILLEROS - ")
     print("Ingrese (3) para - RESETEAR ESTADÍSTICAS DE CASILLEROS -")        
     print("Ingrese (4) para - SALIR - ")
-    opcion_user:str = input("") 
-    
-    while not (opcion_user.isnumeric()) or int(opcion_user) not in range(1, 4+1):
+    opcion_menu_user:str = input("")
+   
+    while not (opcion_menu_user.isnumeric()) or int(opcion_menu_user) not in range(1, 4+1):
         print("Por favor ingrese una opción válida:")
-        opcion_user = input("")
+        opcion_menu_user = input("")
 
-    opcion:int = int(opcion_user)
+    opcion:int = int(opcion_menu_user)
 
     if (opcion == OP_NUEVA_PARTIDA): 
         print(" ----- INICIANDO NUEVA PARTIDA -----")
         print("")
+
+        #Obvio falta validar aqui el tema de que sean solo letras
+        nombre_jugador_1:str = input("Ingrese el nombre del jugador 1: ")
+        nombre_jugador_2:str = input("Ingrese el nombre del jugador 2: ")
+
+        jugador_1:dict = {nombre_jugador_1 : 0} #Nombre : posicion actual del tablero
+        jugador_2:dict = {nombre_jugador_2 : 0} #Nombre : posicion actual del tablero
+
         CANTIDAD_FILAS_TABLERO:int = 10
         CANTIDAD_COLUMNAS_TABLERO:int = 10
         ultima_pos_fila:int = 1 
 
         for fila in range(1, CANTIDAD_FILAS_TABLERO + 1):
-            print(f"-- Fila {fila}:")
-            for posicion in range(ultima_pos_fila, ultima_pos_fila+CANTIDAD_FILAS_TABLERO):
-                print(posicion, end=' ')
+            for posicion in range(ultima_pos_fila, ultima_pos_fila + CANTIDAD_FILAS_TABLERO):
+                if (posicion in POS_ESCALERAS_SERPIENTES.keys()):
+                    if ( posicion < POS_ESCALERAS_SERPIENTES.get(posicion, 0)):
+                        #Es una escalera 
+                        print(f"| {posicion} (E) ", end=' ')
+                    else: 
+                        #Es una serpiente (ponele)
+                        print(f"| {posicion} (S) ", end=' ')                    
+                else:    
+                    print(f"| {posicion} ", end=' ')
+                    
+            print("|")
             ultima_pos_fila = posicion + 1
             print("")
 
