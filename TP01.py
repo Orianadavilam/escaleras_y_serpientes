@@ -48,20 +48,10 @@ def imprimirTablero(tablero:list, posiciones_especiales:dict, jugadores:list) ->
 
         print("")
 
-def main() -> None: 
-    #Constantes
-    CANTIDAD_OPCIONES_MENU:int = 4
-    OP_NUEVA_PARTIDA:int = 1
-    OP_MOSTRAR_ESTADISTICAS:int = 2
-    OP_RESET_ESTADISTICAS:int = 3
-    OP_SALIR_JUEGO:int = 4
-    CANTIDAD_FILAS_TABLERO:int = 10
-    CANTIDAD_COLUMNAS_TABLERO:int = 10
-
-    #Constante del diccionario con las casilleroes de las escaleras y serpientes 
-    POS_ESCALERAS_SERPIENTES:dict = {3: 18, 6: 67, 57: 83, 72: 89, 85: 96, 86: 45, 88: 31, 98: 79, 63: 22, 58: 37, 48: 12, 36: 17}
-
+def menu() -> int:
+    #Crea el menu y retorna la opcion escogida por el usuario
     #Realizo la creacion del menú 
+    CANTIDAD_OPCIONES_MENU:int = 4
     print("Bienvenido al entretenido y maravilloso juego de 'SERPIENTES Y ESCALERAS'. Por favor ingrese una opción para continuar: ")
     print("Ingrese (1) para - INICIAR UNA NUEVA PARTIDA -")
     print("Ingrese (2) para - MOSTRAR ESTADÍSTICAS DE CASILLEROS - ")
@@ -73,57 +63,81 @@ def main() -> None:
         print("Por favor ingrese una opción de menú válida:")
         opcion_menu_user = input("")
 
-    opcion:int = int(opcion_menu_user)
+    return int(opcion_menu_user)
+
+
+def main() -> None: 
+    #Constantes
+    OP_NUEVA_PARTIDA:int = 1
+    OP_MOSTRAR_ESTADISTICAS:int = 2
+    OP_RESET_ESTADISTICAS:int = 3
+    OP_SALIR_JUEGO:int = 4
+    CANTIDAD_FILAS_TABLERO:int = 5
+    CANTIDAD_COLUMNAS_TABLERO:int = 5 
+
+    #Constante del diccionario con las casilleroes de las escaleras y serpientes 
+    POS_ESCALERAS_SERPIENTES:dict = {3: 18, 6: 67, 57: 83, 72: 89, 85: 96, 86: 45, 88: 31, 98: 79, 63: 22, 58: 37, 48: 12, 36: 17}
+    opcion:int = menu()
 
     if (opcion == OP_NUEVA_PARTIDA): 
         print(" ----- INICIANDO NUEVA PARTIDA -----")
         print("")
         hay_ganador:bool = False
-
-        #Obvio falta validar aqui el tema de que sean solo letras
-        nombre_jugador_1:str = "Ori" #input("Ingrese el nombre del jugador 1: ")
-        nombre_jugador_2:str = "Jesus" #input("Ingrese el nombre del jugador 2: ")
-        jugador_1:dict = {nombre_jugador_1 : 0} #Nombre : valor_dados
-        jugador_2:dict = {nombre_jugador_2 : 0} #Nombre : valor_dados
-        jugadores:list = [jugador_1, jugador_2]
         tablero:list = crearTablero(CANTIDAD_FILAS_TABLERO, CANTIDAD_COLUMNAS_TABLERO)
 
+        #Obvio falta validar aqui el tema de que sean solo letras
+        maximo_casillero_tablero = CANTIDAD_FILAS_TABLERO * CANTIDAD_COLUMNAS_TABLERO #Dimension del tablero
+        nombre_jugador_1:str = input("Ingrese el nombre del jugador 1: ")
+        nombre_jugador_2:str = input("Ingrese el nombre del jugador 2: ")
+        jugador_1:dict = {nombre_jugador_1 : 0} #Nombre : casillero
+        jugador_2:dict = {nombre_jugador_2 : 0} #Nombre : casillero
+        jugadores:list = [jugador_1, jugador_2]
+        ganador_absoluto:str = ""
+    
         while not hay_ganador:
-            #input(f"{nombre_jugador_1} por favor presiona una tecla para lanzar los dados")
-            valor_dados = random.randint(1, 6)
-            print(f"{nombre_jugador_1} sacaste un: {valor_dados}")
-            time.sleep(1)
+            for jugador in jugadores:
+                if (len(ganador_absoluto) == 0):
+                    #No necesito que lo haga si ya hay un ganador
+                    for nombre in jugador.keys():
+                        nombre_jugador:str = nombre
+                    
+                    input(f"{nombre_jugador} por favor presiona enter para lanzar los dados")
+                    valor_dados = random.randint(1, 6)
+                    print(f"{nombre_jugador} sacaste un: {valor_dados}")
+                    jugador[nombre_jugador] += valor_dados
+                    casillero_a_mover = jugador.get(nombre_jugador)   
 
-            jugador_1 [nombre_jugador_1] += valor_dados
-            casillero_a_mover = jugador_1.get(nombre_jugador_1)   
+                    if (casillero_a_mover in POS_ESCALERAS_SERPIENTES):
+                        accion:str = "avanzas"
+                        nombre_casilla = "escalera"
+                        casillero_nuevo = POS_ESCALERAS_SERPIENTES.get(casillero_a_mover, 0)
 
-            if (casillero_a_mover in POS_ESCALERAS_SERPIENTES):
-                accion:str = "avanzas"
-                nombre_casilla = "escalera"
+                        if(casillero_nuevo < casillero_a_mover):
+                            accion = "retrocedes"
+                            nombre_casilla = "serpiente"
 
-                casillero_nueva = POS_ESCALERAS_SERPIENTES.get(casillero_a_mover, 0)
+                        casillero_a_mover = casillero_nuevo    
+                        print(f"{nombre_jugador} caíste en una {nombre_casilla}, así que {accion} hasta la casillero: {casillero_a_mover}")
+                    elif casillero_a_mover < maximo_casillero_tablero :
+                        print(f"{nombre_jugador} avanzas hasta la casillero: {casillero_a_mover}")               
 
-                if(casillero_a_mover > casillero_nueva):
-                    accion = "retrocedes"
-                    nombre_casilla = "serpiente"
-
-                casillero_a_mover = casillero_nueva    
-                print(f"{nombre_jugador_1} caíste en una {nombre_casilla}, así que {accion} hasta la casillero: {casillero_a_mover}")
-            else:
-                print(f"{nombre_jugador_1} avanzas hasta la casillero: {casillero_a_mover}")
+                    if (casillero_a_mover >= maximo_casillero_tablero):
+                        ganador_absoluto = nombre_jugador
+                        hay_ganador = True
+                        casillero_a_mover = CANTIDAD_FILAS_TABLERO * CANTIDAD_COLUMNAS_TABLERO #Para que quede en la ultima posicion del tablero
+                    
+                    jugador[nombre_jugador] = casillero_a_mover
+                    imprimirTablero(tablero, POS_ESCALERAS_SERPIENTES, jugadores)
             
-            time.sleep(1)
-            jugador_1 [nombre_jugador_1] = casillero_a_mover
-            hay_ganador = jugador_1.get(nombre_jugador_1) >= CANTIDAD_FILAS_TABLERO * CANTIDAD_COLUMNAS_TABLERO
-
-            imprimirTablero(tablero, POS_ESCALERAS_SERPIENTES, jugadores)
+        print(f"FELICIDADES {ganador_absoluto}, GANASTE EN ESTA OPORTUNIDAD")
+        print("")
+        menu()
             
     elif (opcion == OP_MOSTRAR_ESTADISTICAS):
         print(" ----- ESTADISTICAS DEL JUEGO ----- ")
     elif (opcion == OP_RESET_ESTADISTICAS):
         print ("  ----- RESETEANDO ESTADISTICAS ----- ") 
     else: 
-        #Opcion "SALIR"
         print(" ---- ESPERAMOS VERTE PRONTO PARA UNA NUEVA PARTIDA ----- ")
         exit() 
 
