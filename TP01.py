@@ -1,5 +1,18 @@
 import random 
 
+#Constantes 
+CANTIDAD_OPCIONES_MENU:int = 4
+OP_NUEVA_PARTIDA:int = 1
+OP_MOSTRAR_ESTADISTICAS:int = 2
+OP_RESET_ESTADISTICAS:int = 3
+OP_SALIR_JUEGO:int = 4
+CANTIDAD_FILAS_TABLERO:int = 10
+CANTIDAD_COLUMNAS_TABLERO:int = 10
+
+#Constante del diccionario dado con las casilleros de las escaleras y serpientes 
+POS_ESCALERAS_SERPIENTES:dict = {3: 18, 6: 67, 57: 83, 72: 89, 85: 96, 86: 45, 88: 31, 98: 79, 63: 22, 58: 37, 48: 12, 36: 17}
+TIPOS_TWEAKS:dict = {"CASCARA_BANANA":5, "MAGICO":3, "RUSHERO":1, "HONGOS_LOCOS":1} #Nombre_tweak, cantidad    
+
 def crear_tablero(cantidad_filas:int, cantidad_columnas:int) -> list:
     #Crea un tablero con la cantidad de filas y el numero de casilleros de cada una
     #Retorna una lista de filas de tamaño "cantidad_columnas"
@@ -23,7 +36,7 @@ def obtener_casilleros_tweaks(POS_ESCALERAS_SERPIENTES:dict, TIPOS_TWEAKS:dict, 
     casilleros_tweaks:dict = {} #Retorno
 
     for tweak, cantidad in TIPOS_TWEAKS.items():
-            #Por cada casillero especial 
+        #Por cada casillero especial 
         for item in range (cantidad): 
             posicion_reestringida:bool = True
                 
@@ -69,7 +82,7 @@ def obtener_casilleros_especiales(POS_ESCALERAS_SERPIENTES:dict, TIPOS_TWEAKS:di
 
 
 def imprimir_tablero(tablero:list, casilleros_especiales:dict, jugadores:list) -> None:
-    #Necesito que imprima las filas al reves 
+    #Necesito que imprima las filas al reves
     tablero.sort(reverse=True)
 
     for fila in range(len(tablero)):
@@ -88,8 +101,8 @@ def imprimir_tablero(tablero:list, casilleros_especiales:dict, jugadores:list) -
             for jugador in jugadores:
                 datos_jugador:dict = jugador
 
-                if (casillero in datos_jugador.values()):
-                    for nombre in datos_jugador.keys():
+                for nombre, posicion in datos_jugador.items():
+                    if (casillero == posicion):
                         print(f" ({nombre})", end = '')
 
         print("")
@@ -98,7 +111,8 @@ def imprimir_tablero(tablero:list, casilleros_especiales:dict, jugadores:list) -
 def menu() -> int:
     #Crea el menu y retorna la opcion escogida por el usuario
     #Realizo la creacion del menú 
-    CANTIDAD_OPCIONES_MENU:int = 4
+    print("")
+    print("")
     print("Bienvenido al entretenido y maravilloso juego de 'SERPIENTES Y ESCALERAS'. Por favor ingrese una opción para continuar: ")
     print("Ingrese (1) para - INICIAR UNA NUEVA PARTIDA -")
     print("Ingrese (2) para - MOSTRAR ESTADÍSTICAS DE CASILLEROS - ")
@@ -114,28 +128,21 @@ def menu() -> int:
 
 
 def main() -> None: 
-    #Constantes
-    OP_NUEVA_PARTIDA:int = 1
-    OP_MOSTRAR_ESTADISTICAS:int = 2
-    OP_RESET_ESTADISTICAS:int = 3
-    OP_SALIR_JUEGO:int = 4
-    CANTIDAD_FILAS_TABLERO:int = 10
-    CANTIDAD_COLUMNAS_TABLERO:int = 10 
 
-    #Constante del diccionario dado con las casilleros de las escaleras y serpientes 
-    POS_ESCALERAS_SERPIENTES:dict = {3: 18, 6: 67, 57: 83, 72: 89, 85: 96, 86: 45, 88: 31, 98: 79, 63: 22, 58: 37, 48: 12, 36: 17}    
     opcion:int = 0
+    partidas_jugadas:int = 0
+    estadisticas_casilleros:dict =  {"SERPIENTE":0, "ESCALERA":0, "CASCARA_BANANA":0, "MAGICO":0, "RUSHERO":0, "HONGOS_LOCOS":0}
 
     while not (opcion == OP_SALIR_JUEGO):
         opcion = menu()
 
         if (opcion == OP_NUEVA_PARTIDA): 
+            partidas_jugadas += 1 
             print(" ----- INICIANDO NUEVA PARTIDA -----")
             print("")
             hay_ganador:bool = False
             tablero:list = crear_tablero(CANTIDAD_FILAS_TABLERO, CANTIDAD_COLUMNAS_TABLERO) #Genera el tablero dinamicamente segun las filas y columnas
-            maximo_casillero_tablero = CANTIDAD_FILAS_TABLERO * CANTIDAD_COLUMNAS_TABLERO #Dimension del tableros
-            TIPOS_TWEAKS:dict = {"CASCARA_BANANA":5, "MAGICO":3, "RUSHERO":1, "HONGOS_LOCOS":1} #Nombre_tweak, cantidad
+            maximo_casillero_tablero = CANTIDAD_FILAS_TABLERO * CANTIDAD_COLUMNAS_TABLERO #Dimension del tablero
             casilleros_especiales:dict = obtener_casilleros_especiales(POS_ESCALERAS_SERPIENTES, TIPOS_TWEAKS,  maximo_casillero_tablero, CANTIDAD_COLUMNAS_TABLERO)
         
             #Obvio falta validar aqui el tema de que sean solo letras
@@ -168,17 +175,17 @@ def main() -> None:
                             if (tipo_casillero == "E" or tipo_casillero == "S"):
                                 casillero_nuevo = POS_ESCALERAS_SERPIENTES.get(casillero_a_mover, 0)
                                 if (tipo_casillero == "E"):
-                                    nombre_casillero = "escalera"
+                                    nombre_casillero = "ESCALERA"
                                 else:
-                                    nombre_casillero = "serpiente"
+                                    nombre_casillero = "SERPIENTE"
 
                             elif (tipo_casillero == "C"):
                                 #DEBE CAER DOS PISOS
-                                nombre_casillero = "cáscara de banana"
+                                nombre_casillero = "CASCARA_BANANA"
                                 casillero_nuevo = casillero_a_mover - (2*CANTIDAD_COLUMNAS_TABLERO)      
                             elif (tipo_casillero == "M"):
                                 #Calculo un nuevo numero de dados
-                                nombre_casillero = "mágico"
+                                nombre_casillero = "MAGICO"
                                 #No puede caer en el minimo, maximo ni en el mismo porque genero un bucle
                                 casilleros_reestringidos_magico:list = [1, maximo_casillero_tablero, casillero_a_mover]
                                 while (casillero_nuevo in casilleros_reestringidos_magico):
@@ -194,19 +201,19 @@ def main() -> None:
 
                                 if (tipo_casillero == "R"):
                                 #Se mueve hasta la maxima casilla de ese piso
-                                    nombre_casillero = "rushero"
+                                    nombre_casillero = "RUSHERO"
                                     casillero_nuevo = max(tablero[numero_fila_casilla])
                                 
                                 if (tipo_casillero == "H"):
                                 #Se mueve a la minima casilla de ese piso
-                                    nombre_casillero = "hongos locos"
+                                    nombre_casillero = "HONGOS_LOCOS"
                                     casillero_nuevo = min(tablero[numero_fila_casilla])                                                        
                         
                             if(casillero_nuevo < casillero_a_mover):
                                 accion = "retrocedes"
 
                             casillero_a_mover = casillero_nuevo 
-
+                            estadisticas_casilleros[nombre_casillero] += 1
                             print(f"{nombre_jugador} caíste en casillero '{nombre_casillero}', así que {accion} hasta el casillero: {casillero_a_mover}")
                           
                         if casillero_a_mover < maximo_casillero_tablero :
@@ -222,10 +229,26 @@ def main() -> None:
                 
             print(f"FELICIDADES {ganador_absoluto}, GANASTE EN ESTA OPORTUNIDAD")
             print("")
+
         elif (opcion == OP_MOSTRAR_ESTADISTICAS):
+            print("")
+            print("")
             print(" ----- ESTADISTICAS DEL JUEGO ----- ")
+            
+            if (partidas_jugadas > 0):
+                #Muestro estadisticas
+                print("---- ESTADISTICAS DE LOS CASILLEROS ESPECIALES ---- ")
+                for tweak, cantidad in estadisticas_casilleros.items():
+                    print(f"{tweak} : {cantidad} ")
+            else:
+                print("Todavía no se ha jugado ninguna partida. No hay estadísticas para mostrar.")
+                    
         elif (opcion == OP_RESET_ESTADISTICAS):
-            print ("  ----- RESETEANDO ESTADISTICAS ----- ") 
+            print("")
+            print("")
+            print ("  ----- RESETEANDO ESTADISTICAS ----- ")
+            for tweak in estadisticas_casilleros.keys():
+                estadisticas_casilleros[tweak] = 0 
 
     print(" ---- ESPERAMOS VERTE PRONTO PARA UNA NUEVA PARTIDA ----- ")
      
