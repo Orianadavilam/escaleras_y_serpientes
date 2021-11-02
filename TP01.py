@@ -17,6 +17,7 @@ CASILLEROS_ESCALERAS_SERPIENTES:dict = {3: 18, 6: 67, 57: 83, 72: 89, 85: 96, 86
 ACCIONES_CASILLEROS:list = ["avanzas", "retrocedes"]
 ACCION_AVANZAR:int = 0
 ACCION_RETROCEDER:int = 1
+MAXIMO_LEN_NOMBRE_JUGADORES:int = 3
 
 #Constantes casilleros especiales 
 TIPOS_TWEAKS:dict = {"CASCARA_BANANA":5, "MAGICO":3, "RUSHERO":1, "HONGOS_LOCOS":1} #Nombre_tweak, cantidad de apariciones
@@ -118,7 +119,7 @@ def generar_casilleros_tweaks(maximo_casillero_tablero:int) -> dict:
     primer_casillero_piso_2:int = (2 * CANTIDAD_COLUMNAS_TABLERO + 1)
 
     for tweak, cantidad_apariciones in TIPOS_TWEAKS.items():
-        #Por cada casillero especial 
+        #Por cada casillero de tipo tweak
         for item in range (cantidad_apariciones): 
             casillero_reestringido:bool = True
                 
@@ -227,13 +228,18 @@ def imprimir_tablero(tablero:list, casilleros_especiales:dict, jugadores:list) -
                 dato_casilla = f"({tipo_casillero})"
 
             #Además imprimo los jugadores que están en la casilla actualmente
+            dato_casilla_jugadores:str = ""
             for jugador in jugadores:
                 datos_jugador:dict = jugador
 
                 for nombre, posicion in datos_jugador.items():
                     if (casillero == posicion):
-                        dato_casilla += f"({nombre}) "
-                
+                        dato_casilla_jugadores += f"({nombre}) "
+
+            if (len(dato_casilla_jugadores) > 0):
+                #Asi no imprime el numero de casilla, solo los jugadores
+                dato_casilla = dato_casilla_jugadores 
+
             print('|{:^12}'.format(dato_casilla), end='')
     
         print("|")
@@ -293,10 +299,42 @@ def menu() -> int:
 
     return int(opcion_menu_user)
 
+def nombre_jugador_valido(nombre:str, nombres_jugadores:list) -> bool:
+    """ 
+    Valida si el ingreso del usuario por comando es válido como 
+    un nombre de jugador. Los nombres deben contener hasta 3 caracteres
+    como máximos, pueden ser alfanuméricos y no deben ser espacios en 
+    blanco. Tampoco se deben repetir con los nombre de jugadores ya ingresados
+
+    Parametros
+    ----------
+    nombre: str
+        El nombre del jugador ingresado por el usuario  
+
+    nombres_jugadores: list 
+        Los nombre de jugadores ya ingresados por el usuario 
+
+    Retorno
+    -------
+    nombre_valido: bool
+        Retorna si corresponde a un nombre válido para el juego y no ha 
+        sido ingresado antes 
+   """
+    nombre_valido:bool = False
+
+    if (not (nombre.isspace() or len(nombre) == 0) and (len(nombre) <= MAXIMO_LEN_NOMBRE_JUGADORES)):
+        if (nombre not in nombres_jugadores):
+            nombre_valido = True
+
+    return nombre_valido
+
 def obtener_jugadores() -> list:
     """ 
     Obtiene el listado de jugadores que van a participar en la partida. Le solicita
-    al usuario el nombre de cada uno, y obtiene de forma aleatoria el primero en jugar. 
+    al usuario el nombre de cada uno, y obtiene de forma aleatoria el primero en jugar.
+    En este caso para poder imprimir un tablero bonito, se le pide al usuario que el nombre
+    solo tenga 3 caracteres, que pueden ser alfanumericos, pero sólo 3 y que no sean espacios en 
+    blanco. La funcion se encarga de validar que la entrada sea la requerida 
 
     Retorno
     -------
@@ -308,18 +346,28 @@ def obtener_jugadores() -> list:
    """
     jugadores_ingresados:list = []
     jugadores:list = []
+    nombres_jugadores:list = [] #Es un auxiliar para verificar que no se repitan nombrs de jugadores
+
     print("Por favor, ingresa los nombres de los jugadores para sortear quién tendrá el primer turno en la partida")
+    print("Para efectos del juego, los nombre de usuario solo pueden tener hasta 3 caracteres alfanuméricos y no deben repetirse: ")
     
     for item in range(CANTIDAD_JUGADORES):
         #El jugador es un diccionario con clave:nombre, valor: posicion_actual
         data_jugador:dict = {}         
-        nombre_jugador:str = input(f"Ingrese el nombre del jugador {item+1}: ")
-        data_jugador[nombre_jugador] = 0 #Inicializo la posicion en el tablero
+        nombre_jugador_ingresado:str = input(f"Ingrese el nombre del jugador {item+1}: ")
+
+        while(not nombre_jugador_valido(nombre_jugador_ingresado, nombres_jugadores)): 
+            print(f"Por favor, ingrese un nombre válido para el jugador {item+1} ")
+            nombre_jugador_ingresado = input(f"Recuerda que debe tener menos de {MAXIMO_LEN_NOMBRE_JUGADORES} caracteres y no debe repetirse con los ya ingresados:")
+        
+        data_jugador[nombre_jugador_ingresado] = 0 #Inicializo la posicion en el tablero
+        nombres_jugadores.append(nombre_jugador_ingresado)
         jugadores_ingresados.append(data_jugador)
 
     primer_jugador:int = randint(0, CANTIDAD_JUGADORES-1)
     
     for nombre in jugadores_ingresados[primer_jugador].keys():
+        print("")
         print(f"Felicidades {nombre}, jugarás de primero")
 
     #Primero agrego en la lista, el jugador que salió sorteado para primer turno    
@@ -405,7 +453,8 @@ def obtener_nueva_posicion(maximo_casillero_tablero, tablero, casillero_a_mover,
 
 def imprimir_instrucciones() -> None:
     """ 
-    Imprime por consola las instrucciones del juego 
+    Imprime por consola las instrucciones del juego para que el usuario sepa que significan 
+    las iniciales de cada casillero especial y la función que cumplen
     """
     print("")
     print(f"""
