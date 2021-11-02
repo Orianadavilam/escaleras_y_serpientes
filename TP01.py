@@ -86,7 +86,7 @@ def casillero_ocupado(casillero:int, casilleros_tweaks:list) -> bool:
     casillero_ocupado:bool = False 
 
     if (casillero in CASILLEROS_ESCALERAS_SERPIENTES.keys() or casillero in CASILLEROS_ESCALERAS_SERPIENTES.values() or casillero in casilleros_tweaks):
-        retorna = True
+        casillero_ocupado = True
 
     return casillero_ocupado 
 
@@ -96,7 +96,8 @@ def generar_casilleros_tweaks(maximo_casillero_tablero:int) -> dict:
     que pueden existir en el juego según las especificaciones y reestricciones establecidas
     para cada uno. Los casilleros tweaks son generados al azar 
     y no pueden sobreponerse con las escaleras o serpientes (tanto inicion como fin
-    de las mismas) o entre sí 
+    de las mismas) o entre sí. Tampoco pueden estar en el maximo casillero del tablero
+    porque impedirian que un jugador gane la partida. 
 
     Parametros
     ----------
@@ -126,13 +127,14 @@ def generar_casilleros_tweaks(maximo_casillero_tablero:int) -> dict:
             while (casillero_reestringido): 
                 casillero_aleatorio:int = randint(1, maximo_casillero_tablero) 
 
-                if (not casillero_ocupado(casillero_aleatorio, casilleros_tweaks)):
-                    #Todo va bien, porque no está sobreponiendose con ninguna existente
+                if (not casillero_ocupado(casillero_aleatorio, casilleros_tweaks) and casillero_aleatorio != maximo_casillero_tablero):
+                    #Todo va bien, porque no está sobreponiendose con ninguna existente ni está en el último casillero del tablero
+                    #No deberia haber nada en el ultimo casillero porque podría impedir que haya un ganador
                     if (tweak == CASCARA_BANANA and casillero_aleatorio > primer_casillero_piso_2):
                         #Este tweak solo se puede colocar a partir del piso 2
                         casillero_reestringido = False
-                    elif ( tweak == MAGICO ):
-                        #Este tipo de tweak no tiene reestricciones
+                    elif ( tweak == MAGICO and casillero_aleatorio != maximo_casillero_tablero):
+                        #Este tipo de tweak no tiene reestricciones para su posicion
                         casillero_reestringido = False
                     elif (tweak == RUSHERO and casillero_aleatorio not in max_casilleros_piso):
                         #Este tweak no puede colocarse en los maximos casilleros de cada piso
@@ -239,7 +241,7 @@ def imprimir_tablero(tablero:list, casilleros_especiales:dict, jugadores:list) -
             if (len(dato_casilla_jugadores) > 0):
                 #Asi no imprime el numero de casilla, solo los jugadores
                 dato_casilla = dato_casilla_jugadores 
-
+            
             print('|{:^12}'.format(dato_casilla), end='')
     
         print("|")
@@ -303,8 +305,8 @@ def nombre_jugador_valido(nombre:str, nombres_jugadores:list) -> bool:
     """ 
     Valida si el ingreso del usuario por comando es válido como 
     un nombre de jugador. Los nombres deben contener hasta 3 caracteres
-    como máximos, pueden ser alfanuméricos y no deben ser espacios en 
-    blanco. Tampoco se deben repetir con los nombre de jugadores ya ingresados
+    como máximos para poder imprimir un buen formato de tablero, pueden ser alfanuméricos 
+    y no deben ser espacios en blanco. Tampoco se deben repetir con los nombre de jugadores ya ingresados.
 
     Parametros
     ----------
@@ -346,10 +348,10 @@ def obtener_jugadores() -> list:
    """
     jugadores_ingresados:list = []
     jugadores:list = []
-    nombres_jugadores:list = [] #Es un auxiliar para verificar que no se repitan nombrs de jugadores
+    nombres_jugadores:list = [] #Es un auxiliar para verificar que no se repitan nombres de jugadores
 
     print("Por favor, ingresa los nombres de los jugadores para sortear quién tendrá el primer turno en la partida")
-    print("Para efectos del juego, los nombre de usuario solo pueden tener hasta 3 caracteres alfanuméricos y no deben repetirse: ")
+    print("Para mejorar la visualización del juego, los nombres de usuario solo pueden tener hasta 3 caracteres alfanuméricos y no deben repetirse: ")
     
     for item in range(CANTIDAD_JUGADORES):
         #El jugador es un diccionario con clave:nombre, valor: posicion_actual
@@ -451,37 +453,47 @@ def obtener_nueva_posicion(maximo_casillero_tablero, tablero, casillero_a_mover,
 
     return casillero_nuevo
 
-def imprimir_instrucciones() -> None:
+def imprimir_instrucciones(maximo_casillero_tablero:int) -> None:
     """ 
     Imprime por consola las instrucciones del juego para que el usuario sepa que significan 
     las iniciales de cada casillero especial y la función que cumplen
+
+    Parametros
+    -------
+    maximo_casillero_tablero: int
+        Corresponde al último casillero del tablero (máxima posición), que también
+        puede conocerse como "dimensión del tablero" (filas x columnas)
+
     """
     print("")
     print(f"""
 
         Antes de comenzar la partida, te vamos a mostrar el tablero con todas las posiciones de los 
         casilleros especiales y una breve explicación de los mismos. Ten en cuenta que los casilleros 
-        de tipo tweaks fueron sorteados de manera aleatoria y son diferentes para cada partidas. 
+        de tipo tweaks fueron sorteados de manera aleatoria y son diferentes para cada partida. 
         
         Los casilleros especiales fijos del tablero son:
             {ESCALERA}: Están representadas en el tablero por la letra {ESCALERA[0:1]}, y te avanzan 
             hasta una posición final mayor a la inicial. 
 
-            {SERPIENTE}: Están representadas en el tablero por la letra {SERPIENTE[0:1]}, y te hace retroceder 
+            {SERPIENTE}: Están representadas en el tablero por la letra {SERPIENTE[0:1]}, y te hacen retroceder 
             hasta una posición final menor a la inicial. 
 
         Los casilleros de tipo "TWEAKS" son:  
             {CASCARA_BANANA}: Están representadas en el tablero por la letra {CASCARA_BANANA[0:1]}, y te hacen
             resbalar 2 pisos en el tablero. 
 
-            {MAGICO}: Están representadOs en el tablero por la letra {MAGICO[0:1]}, y te transporta a una nueva 
+            {MAGICO}: Están representados en el tablero por la letra {MAGICO[0:1]}, y te transporta a una nueva 
             posición aleatoria del tablero (excluyendo el principio o el final del mismo)   
 
             {RUSHERO}: Están representados en el tablero por la letra {RUSHERO[0:1]}, y te avanzan 
             hasta la mayor posición de la fila donde te encuentres. 
             
-            {HONGOS_LOCOS}: Están representadOs en el tablero por la letra {HONGOS_LOCOS[0:1]}, y te hacen retroceder 
+            {HONGOS_LOCOS}: Están representados en el tablero por la letra {HONGOS_LOCOS[0:1]}, y te hacen retroceder 
             hasta la mínima posición de la fila donde te encuentres. 
+
+            Las posiciones se calculan de manera aleatoria al presionar el enter y gana el jugador que logre llegar o superar 
+            de primero al casillero {maximo_casillero_tablero}
 
     """)
 
@@ -515,11 +527,12 @@ def iniciar_partida(estadisticas_casilleros:dict) -> None:
     maximo_casillero_tablero = CANTIDAD_FILAS_TABLERO * CANTIDAD_COLUMNAS_TABLERO #Dimension del tablero
     tablero:list = crear_tablero()
     casilleros_especiales:dict = obtener_casilleros_especiales(maximo_casillero_tablero)
+    #Imprimo las instrucciones por primera vez y el tablero inicial asi los jugadores observan donde están las casillas especiales
+    imprimir_instrucciones(maximo_casillero_tablero)
+    imprimir_tablero(tablero, casilleros_especiales, [])
+
     jugadores:list = obtener_jugadores()   
     ganador_absoluto:str = ""
-    #Imprimo las instrucciones y el tablero por primera vez asi los jugadores observan donde están las casillas especiales
-    imprimir_instrucciones()
-    imprimir_tablero(tablero, casilleros_especiales, jugadores)
 
     while not hay_ganador:
         for jugador in jugadores:
@@ -585,6 +598,7 @@ def imprimir_estadisticas(estadisticas_casilleros:dict) -> None:
     print("")
     print("")
     print("---- ESTADISTICAS DE LOS CASILLEROS ESPECIALES ---- ")
+    print("")
     
     for casillero_especial, estadistica in estadisticas_casilleros.items():
         print(f"{casillero_especial} : {estadistica} ")
