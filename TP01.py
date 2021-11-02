@@ -1,4 +1,4 @@
-import random 
+from random import randint
 
 #Constantes para las opciones del menú
 CANTIDAD_OPCIONES_MENU:int = 4
@@ -123,7 +123,7 @@ def generar_casilleros_tweaks(maximo_casillero_tablero:int) -> dict:
             casillero_reestringido:bool = True
                 
             while (casillero_reestringido): 
-                casillero_aleatorio:int = random.randint(1, maximo_casillero_tablero) 
+                casillero_aleatorio:int = randint(1, maximo_casillero_tablero) 
 
                 if (not casillero_ocupado(casillero_aleatorio, casilleros_tweaks)):
                     #Todo va bien, porque no está sobreponiendose con ninguna existente
@@ -210,19 +210,21 @@ def imprimir_tablero(tablero:list, casilleros_especiales:dict, jugadores:list) -
    """
     #Necesito que imprima las filas al reves para cumplir con el formato
     tablero.sort(reverse=True)
+    print("")
 
     for fila in range(len(tablero)):
-        casilleros_fila:list = tablero[fila] 
+        casilleros_fila:list = tablero[fila]
+
         if (fila % 2 == 0):
             #Si la fila es par, ordeno de manera descendente
             casilleros_fila.sort(reverse=True)
         
         for casillero in casilleros_fila:
+            dato_casilla:str = str(casillero) #Lo que muestro en el casillero
+            
             if (casillero in casilleros_especiales.keys()):
-                tipoCasillero:str = casilleros_especiales.get(casillero)
-                print(f"| {casillero} ({tipoCasillero[0:1]}) ", end=' ')
-            else:    
-                print(f"| {casillero}", end=' ')
+                tipo_casillero:str = casilleros_especiales.get(casillero)[0:1]
+                dato_casilla = f"({tipo_casillero})"
 
             #Además imprimo los jugadores que están en la casilla actualmente
             for jugador in jugadores:
@@ -230,9 +232,11 @@ def imprimir_tablero(tablero:list, casilleros_especiales:dict, jugadores:list) -
 
                 for nombre, posicion in datos_jugador.items():
                     if (casillero == posicion):
-                        print(f" [{nombre}]", end = '')
-
-        print("")
+                        dato_casilla += f"({nombre}) "
+                
+            print('|{:^12}'.format(dato_casilla), end='')
+    
+        print("|")
         print("")
 
 def imprimir_opciones_menu() -> None:
@@ -240,7 +244,6 @@ def imprimir_opciones_menu() -> None:
     Imprime por consola las opciones del menú principal para que el usuario
     pueda escoger alguna
     """
-
     print("")
     print("Ingrese (1) para - INICIAR UNA NUEVA PARTIDA -")
     print("Ingrese (2) para - MOSTRAR ESTADÍSTICAS DE CASILLEROS - ")
@@ -314,7 +317,7 @@ def obtener_jugadores() -> list:
         data_jugador[nombre_jugador] = 0 #Inicializo la posicion en el tablero
         jugadores_ingresados.append(data_jugador)
 
-    primer_jugador:int = random.randint(0, CANTIDAD_JUGADORES-1)
+    primer_jugador:int = randint(0, CANTIDAD_JUGADORES-1)
     
     for nombre in jugadores_ingresados[primer_jugador].keys():
         print(f"Felicidades {nombre}, jugarás de primero")
@@ -328,7 +331,110 @@ def obtener_jugadores() -> list:
             #No esta en la lista final, lo agrego 
             jugadores.append(jugador)
 
-    return jugadores    
+    return jugadores
+
+def obtener_nueva_posicion(maximo_casillero_tablero, tablero, casillero_a_mover, tipo_casillero):
+    """ 
+    Obtiene una nueva posicion para el jugador según la lógica y el comportamiento de 
+    cada casillero especial. Sólo se calcula una nueva posicion si el valor de los 
+    dados cae en una casilla que tiene un casillero especial, porque de lo contrario 
+    avanza al número correspondiente sin problemas 
+
+    Parametros
+    -------
+    maximo_casillero_tablero: int
+        Corresponde al último casillero del tablero (máxima posición), que también
+        puede conocerse como "dimensión del tablero" (filas x columnas)
+
+    tablero: list 
+        Es el tablero de juego actual que tiene el numero de filas y los casilleros
+        que pertenecen a cada una, para poder calcular los maximos y minimos hasta 
+        donde se posicionan los casilleros de tipo RUSHERO Y HONGOS LOCOS
+
+    casillero_a_mover: int
+        Corresponde al casillero donde debería moverse el jugador. Ya el casillero 
+        fue calculado anteriormente según la posicion del jugador y el valor de los 
+        dados obtenidos
+
+    tipo_casillero: str 
+        Corresponde al nombre del casillero especial donde cayó el jugador. 
+
+    Retorno
+    -------
+    casillero_nuevo: int
+        El casillero al que debería moverse el jugador calculado según la lógica de 
+        cada casillero especial
+
+   """
+    casillero_nuevo:int = 1
+
+    if (tipo_casillero == ESCALERA or tipo_casillero == SERPIENTE):
+        casillero_nuevo = CASILLEROS_ESCALERAS_SERPIENTES.get(casillero_a_mover, 0)
+                        
+    elif (tipo_casillero == CASCARA_BANANA):
+        #DEBE CAER DOS PISOS
+       casillero_nuevo = casillero_a_mover - (2*CANTIDAD_COLUMNAS_TABLERO)
+
+    elif (tipo_casillero == MAGICO):
+        #Calculo una nueva posicion aleatoria
+        #No puede caer en el minimo, maximo ni en el mismo porque genero un bucle
+        casilleros_reestringidos_magico:list = [1, maximo_casillero_tablero, casillero_a_mover]
+                        
+        while (casillero_nuevo in casilleros_reestringidos_magico):
+            casillero_nuevo = randint(1, 6)
+                
+    elif (tipo_casillero == RUSHERO or tipo_casillero == HONGOS_LOCOS):
+        numero_fila_casilla:int  = 0 
+
+        for fila in range(len(tablero)):
+            casilleros_fila:list = tablero[fila]
+
+            for casilla in casilleros_fila:
+                if (casillero_a_mover == casilla):
+                    numero_fila_casilla = fila
+
+        if (tipo_casillero == RUSHERO):
+            #Se mueve hasta la maxima casilla de ese piso
+           casillero_nuevo = max(tablero[numero_fila_casilla])
+                        
+        if (tipo_casillero == HONGOS_LOCOS):
+            #Se mueve a la minima casilla de ese piso
+            casillero_nuevo = min(tablero[numero_fila_casilla])
+
+    return casillero_nuevo
+
+def imprimir_instrucciones() -> None:
+    """ 
+    Imprime por consola las instrucciones del juego 
+    """
+    print("")
+    print(f"""
+
+        Antes de comenzar la partida, te vamos a mostrar el tablero con todas las posiciones de los 
+        casilleros especiales y una breve explicación de los mismos. Ten en cuenta que los casilleros 
+        de tipo tweaks fueron sorteados de manera aleatoria y son diferentes para cada partidas. 
+        
+        Los casilleros especiales fijos del tablero son:
+            {ESCALERA}: Están representadas en el tablero por la letra {ESCALERA[0:1]}, y te avanzan 
+            hasta una posición final mayor a la inicial. 
+
+            {SERPIENTE}: Están representadas en el tablero por la letra {SERPIENTE[0:1]}, y te hace retroceder 
+            hasta una posición final menor a la inicial. 
+
+        Los casilleros de tipo "TWEAKS" son:  
+            {CASCARA_BANANA}: Están representadas en el tablero por la letra {CASCARA_BANANA[0:1]}, y te hacen
+            resbalar 2 pisos en el tablero. 
+
+            {MAGICO}: Están representadOs en el tablero por la letra {MAGICO[0:1]}, y te transporta a una nueva 
+            posición aleatoria del tablero (excluyendo el principio o el final del mismo)   
+
+            {RUSHERO}: Están representados en el tablero por la letra {RUSHERO[0:1]}, y te avanzan 
+            hasta la mayor posición de la fila donde te encuentres. 
+            
+            {HONGOS_LOCOS}: Están representadOs en el tablero por la letra {HONGOS_LOCOS[0:1]}, y te hacen retroceder 
+            hasta la mínima posición de la fila donde te encuentres. 
+
+    """)
 
 def iniciar_partida(estadisticas_casilleros:dict) -> None: 
     """ 
@@ -362,7 +468,8 @@ def iniciar_partida(estadisticas_casilleros:dict) -> None:
     casilleros_especiales:dict = obtener_casilleros_especiales(maximo_casillero_tablero)
     jugadores:list = obtener_jugadores()   
     ganador_absoluto:str = ""
-    #Imprimo las instrucciones y el tablero por primera vez asi los jugadores observan las casillas especiales
+    #Imprimo las instrucciones y el tablero por primera vez asi los jugadores observan donde están las casillas especiales
+    imprimir_instrucciones()
     imprimir_tablero(tablero, casilleros_especiales, jugadores)
 
     while not hay_ganador:
@@ -372,67 +479,41 @@ def iniciar_partida(estadisticas_casilleros:dict) -> None:
                 for nombre in jugador.keys():
                     nombre_jugador:str = nombre
                 
+                print("")
                 input(f"{nombre_jugador} por favor presiona enter para lanzar los dados")
-                valor_dados = random.randint(1, 6)
+                valor_dados = randint(1, 6)
                 print(f"{nombre_jugador} sacaste un: {valor_dados}")
-                jugador[nombre_jugador] += valor_dados
+                jugador[nombre_jugador] += valor_dados #Actualizo la posicion del jugador
                 casillero_a_mover = jugador.get(nombre_jugador)
                 accion:str = ACCIONES_CASILLEROS[ACCION_AVANZAR] #default    
 
-                while (casillero_a_mover in casilleros_especiales):
+                while (casillero_a_mover in casilleros_especiales):             
                     tipo_casillero:str = casilleros_especiales.get(casillero_a_mover)
-                    casillero_nuevo:int = 1 #Default
-                    accion = ACCIONES_CASILLEROS[ACCION_AVANZAR] #Asi toma el default por cada casillero especial
-
-                    if (tipo_casillero == ESCALERA or tipo_casillero == SERPIENTE):
-                        casillero_nuevo = CASILLEROS_ESCALERAS_SERPIENTES.get(casillero_a_mover, 0)
-                        
-                    elif (tipo_casillero == CASCARA_BANANA):
-                        #DEBE CAER DOS PISOS
-                       casillero_nuevo = casillero_a_mover - (2*CANTIDAD_COLUMNAS_TABLERO)
-
-                    elif (tipo_casillero == MAGICO):
-                        #Calculo una nueva posicion aleatoria
-                        #No puede caer en el minimo, maximo ni en el mismo porque genero un bucle
-                        casilleros_reestringidos_magico:list = [1, maximo_casillero_tablero, casillero_a_mover]
-                        while (casillero_nuevo in casilleros_reestringidos_magico):
-                            casillero_nuevo = random.randint(1, 6)
-                
-                    elif (tipo_casillero == RUSHERO or tipo_casillero == HONGOS_LOCOS):
-                        numero_fila_casilla:int  = 0
-
-                        for fila in range(len(tablero)):
-                            casilleros_fila:list = tablero[fila]
-                            for casilla in casilleros_fila:
-                                if (casillero_a_mover == casilla):
-                                    numero_fila_casilla = fila
-
-                        if (tipo_casillero == RUSHERO):
-                        #Se mueve hasta la maxima casilla de ese piso
-                           casillero_nuevo = max(tablero[numero_fila_casilla])
-                        
-                        if (tipo_casillero == HONGOS_LOCOS):
-                        #Se mueve a la minima casilla de ese piso
-                            casillero_nuevo = min(tablero[numero_fila_casilla])                                                        
+                    accion = ACCIONES_CASILLEROS[ACCION_AVANZAR] #default por cada casillero especial
+                    #Obtiene una nueva casilla según la lógica de cada casillero especial
+                    casillero_nuevo:int = obtener_nueva_posicion(maximo_casillero_tablero, tablero, casillero_a_mover, tipo_casillero)                                                        
                 
                     if(casillero_nuevo < casillero_a_mover):
                         accion = ACCIONES_CASILLEROS[ACCION_RETROCEDER]
 
                     casillero_a_mover = casillero_nuevo 
-                    estadisticas_casilleros[tipo_casillero] += 1
+                    estadisticas_casilleros[tipo_casillero] += 1 #Aumento la estadística del casillero especial
                     print(f"{nombre_jugador} caíste en casillero '{tipo_casillero}', así que {accion} hasta el casillero: {casillero_a_mover}")
                     
-                if casillero_a_mover < maximo_casillero_tablero :
-                    print(f"{nombre_jugador} {accion} hasta la casillero: {casillero_a_mover}")               
+                if casillero_a_mover < maximo_casillero_tablero:
+                    print(f"{nombre_jugador} {accion} hasta el casillero: {casillero_a_mover}")               
 
                 if (casillero_a_mover >= maximo_casillero_tablero):
-                    ganador_absoluto = nombre_jugador
+                    #El ganador del juego es aquel que alcance el valor del máximo casillero o más
                     hay_ganador = True
+                    ganador_absoluto = nombre_jugador
                     casillero_a_mover = maximo_casillero_tablero #Para que quede en la ultima posicion del tablero y no en una pos que no existe
                 
                 jugador[nombre_jugador] = casillero_a_mover
                 imprimir_tablero(tablero, casilleros_especiales, jugadores)
-        
+
+    #Al salir del while significa que hay un ganador
+    print("")    
     print(f"FELICIDADES {ganador_absoluto}, GANASTE EN ESTA OPORTUNIDAD")
     print("")
 
@@ -455,6 +536,7 @@ def imprimir_estadisticas(estadisticas_casilleros:dict) -> None:
     print("")
     print("")
     print("---- ESTADISTICAS DE LOS CASILLEROS ESPECIALES ---- ")
+    
     for casillero_especial, estadistica in estadisticas_casilleros.items():
         print(f"{casillero_especial} : {estadistica} ")
 
@@ -498,6 +580,7 @@ def main() -> None:
             iniciar_partida(estadisticas_casilleros) 
 
         elif (opcion == OPCION_MOSTRAR_ESTADISTICAS):
+            
             if(partidas_jugadas >= 1):
                 imprimir_estadisticas(estadisticas_casilleros)
             else:
